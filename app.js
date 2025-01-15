@@ -5,33 +5,29 @@ const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const User = require('./src/models/user.model'); 
-const productsRouter = require('./src/routes/productsRouter'); 
-const cartsRouter = require('./src/routes/cartsRouter'); 
-const viewsRouter = require('./src/routes/viewsRouter'); 
-const authRouter = require('./src/routes/authRouter'); 
+const config = require('./src/config/config');
+const User = require('./src/models/user.model')
 
 const app = express();
-const PORT = 8080;
 
 // Conexão com o MongoDB
-mongoose.connect('mongodb+srv://usuario:senha@cluster0.mongodb.net/ecommerce?retryWrites=true&w=majority')
+mongoose.connect(config.MONGO_URI)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB Atlas:', err));
 
-
+// Configuração do express-session
 app.use(session({
-    secret: 'seuSegredoAqui', 
+    secret: config.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } 
+    cookie: { secure: false }
 }));
 
-
+// Inicialize o Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-
+// Configuração da estratégia local do Passport
 passport.use(new LocalStrategy(
     { usernameField: 'email' },
     async (email, password, done) => {
@@ -50,16 +46,16 @@ passport.use(new LocalStrategy(
     }
 ));
 
+// Configuração da estratégia do GitHub
 passport.use(new GitHubStrategy({
-    clientID: 'Ov23li2X5P6S9hsQvhXa', 
-    clientSecret: '683e26271a51adeff220525c83a72d652104252e', 
-    callbackURL: 'http://localhost:8080/auth/github/callback' 
+    clientID: config.GITHUB_CLIENT_ID,
+    clientSecret: config.GITHUB_CLIENT_SECRET,
+    callbackURL: config.GITHUB_CALLBACK_URL
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await User.findOne({ githubId: profile.id });
         if (!user) {
-            // Cria um novo usuário se não existir
             user = new User({
                 githubId: profile.id,
                 email: profile.emails[0].value,
@@ -73,7 +69,7 @@ async (accessToken, refreshToken, profile, done) => {
     }
 }));
 
-
+// Serialização e desserialização do usuário
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -87,16 +83,22 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-
+// Middleware para processar JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rotas
+const productsRouter = require('./src/routes/productsRouter');
+const cartsRouter = require('./src/routes/cartsRouter');
+const viewsRouter = require('./src/routes/viewsRouter');
+const authRouter = require('./src/routes/authRouter');
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
-app.use('/auth', authRouter); 
+app.use('/auth', authRouter);
 
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Inicia o servidor
+app.listen(config.PORT, () => {
+    console.log(`Servidor rodando na porta ${config.PORT}`);
 });
