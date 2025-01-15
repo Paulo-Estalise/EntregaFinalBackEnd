@@ -6,16 +6,17 @@ const GitHubStrategy = require('passport-github2').Strategy;
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const config = require('./src/config/config');
-const User = require('./src/models/user.model')
+const User = require('./src/models/user.model');
+const DAOFactory = require('./src/daos/DAOFactory');
+const CartRepository = require('./src/repositories/cartRepository');
 
 const app = express();
 
-// Conexão com o MongoDB
 mongoose.connect(config.MONGO_URI)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB Atlas:', err));
 
-// Configuração do express-session
+
 app.use(session({
     secret: config.SESSION_SECRET,
     resave: false,
@@ -23,11 +24,9 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-// Inicialize o Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configuração da estratégia local do Passport
 passport.use(new LocalStrategy(
     { usernameField: 'email' },
     async (email, password, done) => {
@@ -46,7 +45,6 @@ passport.use(new LocalStrategy(
     }
 ));
 
-// Configuração da estratégia do GitHub
 passport.use(new GitHubStrategy({
     clientID: config.GITHUB_CLIENT_ID,
     clientSecret: config.GITHUB_CLIENT_SECRET,
@@ -69,7 +67,6 @@ async (accessToken, refreshToken, profile, done) => {
     }
 }));
 
-// Serialização e desserialização do usuário
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -83,20 +80,42 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Middleware para processar JSON
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas
+const daoType = process.env.DAO_TYPE || 'mongo'; 
+const dao = DAOFactory.getDAO(daoType);
+const cartRepository = new CartRepository(dao);
+const { isAdmin, isUser } = require('./src/middlewares/authMiddleware');
 const productsRouter = require('./src/routes/productsRouter');
 const cartsRouter = require('./src/routes/cartsRouter');
 const viewsRouter = require('./src/routes/viewsRouter');
 const authRouter = require('./src/routes/authRouter');
+const ticketRouter = require('./src/routes/ticketRouter');
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 app.use('/auth', authRouter);
+app.use('/api/tickets', ticketRouter);
+
+
+app.post('/api/carts', isUser, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const cart = await cartRepository.createCart(userId);
+        res.status(201).json(cart);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao criar carrinho', error });
+    }
+});
+
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Erro interno no servidor', error: err.message });
+});
 
 // Inicia o servidor
 app.listen(config.PORT, () => {
