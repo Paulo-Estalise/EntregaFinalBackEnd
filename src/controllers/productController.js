@@ -1,41 +1,56 @@
-const ProductManager = require('../mongo/ProductManager');
-const productManager = new ProductManager();
+const ProductService = require('../services/productService');
+const MockingModule = require('../utils/mockingModule');
 
-const getProducts = async (req, res) => {
+const productController = {
+  // Endpoint para gerar produtos fictícios
+  async getMockProducts(req, res) {
     try {
-        const { limit = 10, page = 1, sort, query } = req.query;
-        const filter = {};
-        if (query) {
-            filter.$or = [
-                { category: query },
-                { status: query === 'available' },
-            ];
-        }
-        const sortOptions = {};
-        if (sort === 'asc') sortOptions.price = 1;
-        if (sort === 'desc') sortOptions.price = -1;
-        const options = {
-            limit: parseInt(limit),
-            page: parseInt(page),
-            sort: sortOptions,
-            lean: true,
-        };
-        const result = await productManager.getProducts(filter, options);
-        res.json({
-            status: 'success',
-            payload: result.docs,
-            totalPages: result.totalPages,
-            prevPage: result.prevPage,
-            nextPage: result.nextPage,
-            page: result.page,
-            hasPrevPage: result.hasPrevPage,
-            hasNextPage: result.hasNextPage,
-            prevLink: result.hasPrevPage ? `/api/products?limit=${limit}&page=${result.prevPage}&sort=${sort}&query=${query}` : null,
-            nextLink: result.hasNextPage ? `/api/products?limit=${limit}&page=${result.nextPage}&sort=${sort}&query=${query}` : null,
-        });
+      const mockProducts = MockingModule.generateMockProducts(100);
+      res.status(200).json(mockProducts);
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+      res.status(500).json({ message: 'Erro ao gerar produtos fictícios', error });
     }
+  },
+
+  // Outros métodos do controller
+  async getProductById(req, res) {
+    try {
+      const product = await ProductService.findById(req.params.id);
+      if (!product) {
+        throw new Error('PRODUCT_NOT_FOUND'); // Erro personalizado
+      }
+      res.status(200).json(product);
+    } catch (error) {
+      next(error); // Passa o erro para o middleware de tratamento
+    }
+  },
+
+  async createProduct(req, res) {
+    try {
+      const newProduct = await ProductService.create(req.body);
+      res.status(201).json(newProduct);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateProduct(req, res) {
+    try {
+      const updatedProduct = await ProductService.update(req.params.id, req.body);
+      res.status(200).json(updatedProduct);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteProduct(req, res) {
+    try {
+      await ProductService.delete(req.params.id);
+      res.status(204).end();
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
-module.exports = { getProducts };
+module.exports = productController;
