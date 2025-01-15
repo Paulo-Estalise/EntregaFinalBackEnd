@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Recebe uma nova mensagem e exibe na tela
+        socket.on('messageReceived', (message) => {
+            const chat = document.getElementById('chat');
+            const li = document.createElement('li');
+            li.textContent = `${message.user}: ${message.message}`;
+            chat.appendChild(li);
+        });
+
+        // Envia uma nova mensagem
+        document.getElementById('messageForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('user').value;
+            const message = document.getElementById('message').value;
+            socket.emit('newMessage', { user, message });
+            document.getElementById('message').value = '';
+        });
+    </script>
+</head>
+<body>
+    <h1>Chat</h1>
+    <ul id="chat"></ul>
+    <form id="messageForm">
+        <input type="text" id="user" placeholder="Seu nome" required>
+        <input type="text" id="message" placeholder="Sua mensagem" required>
+        <button type="submit">Enviar</button>
+    </form>
+</body>
+</html>

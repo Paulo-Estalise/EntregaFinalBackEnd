@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos em Tempo Real</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Atualiza a lista de produtos quando recebe uma atualização
+        socket.on('updateProducts', (products) => {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            products.forEach(product => {
+                const li = document.createElement('li');
+                li.textContent = `${product.title} - R$ ${product.price}`;
+                productList.appendChild(li);
+            });
+        });
+
+        // Adiciona um novo produto
+        document.getElementById('addProductForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            socket.emit('addProduct', { title, price });
+        });
+
+        // Deleta um produto
+        document.getElementById('deleteProductForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            socket.emit('deleteProduct', parseInt(id));
+        });
+    </script>
+</head>
+<body>
+    <h1>Produtos em Tempo Real</h1>
+    <ul id="productList">
+        {{#each products}}
+            <li>{{this.title}} - R$ {{this.price}}</li>
+        {{/each}}
+    </ul>
+
+    <h2>Adicionar Produto</h2>
+    <form id="addProductForm">
+        <input type="text" id="title" placeholder="Título" required>
+        <input type="number" id="price" placeholder="Preço" required>
+        <button type="submit">Adicionar</button>
+    </form>
+
+    <h2>Deletar Produto</h2>
+    <form id="deleteProductForm">
+        <input type="number" id="deleteId" placeholder="ID do Produto" required>
+        <button type="submit">Deletar</button>
+    </form>
+</body>
+</html>
