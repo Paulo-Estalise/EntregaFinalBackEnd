@@ -7,11 +7,12 @@
 </head>
 <body>
     <h1>Login</h1>
-    <form action="/login" method="POST">
+    <form action="/auth/login" method="POST">
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Senha" required>
         <button type="submit">Entrar</button>
     </form>
+    <a href="/auth/github">Entrar com GitHub</a>
     <a href="/register">Registrar</a>
 </body>
 </html>

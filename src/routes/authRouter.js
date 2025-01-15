@@ -1,15 +1,13 @@
 const express = require('express');
-const router = express.Router(); 
 const passport = require('passport');
-const bcrypt = require('bcrypt');
-const User = require('../models/user.model');
+const router = express.Router();
 
-// Rota de registro
+
 router.post('/register', async (req, res) => {
     const { email, password } = req.body;
     try {
         const hashedPassword = bcrypt.hashSync(password, 10);
-        const role = email === 'adminCoder@coder.com' ? 'admin' : 'user'; // Define o role
+        const role = email === 'adminCoder@coder.com' ? 'admin' : 'user'; 
         const newUser = new User({ email, password: hashedPassword, role });
         await newUser.save();
         res.redirect('/login');
@@ -18,18 +16,27 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Rota de login
+
 router.post('/login', passport.authenticate('local', {
     successRedirect: '/products',
     failureRedirect: '/login',
     failureFlash: true
 }));
 
-// Rota de logout
+
+router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+
+router.get('/github/callback', passport.authenticate('github', {
+    successRedirect: '/products',
+    failureRedirect: '/login'
+}));
+
+
 router.get('/logout', (req, res) => {
     req.logout(() => {
         res.redirect('/login');
     });
 });
 
-module.exports = router; // Exporte o router
+module.exports = router;
