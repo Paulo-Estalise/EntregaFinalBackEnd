@@ -3,37 +3,33 @@ const ProductManager = require('../mongo/ProductManager');
 const router = express.Router();
 const productManager = new ProductManager();
 
-// Rota GET para listar produtos com paginação, filtros e ordenação
 router.get('/', async (req, res) => {
     try {
         const { limit = 10, page = 1, sort, query } = req.query;
 
-        // Opções de filtro
         const filter = {};
         if (query) {
             filter.$or = [
-                { category: query }, // Filtra por categoria
-                { status: query === 'available' }, // Filtra por disponibilidade
+                { category: query }, 
+                { status: query === 'available' }, 
             ];
         }
 
-        // Opções de ordenação
+  
         const sortOptions = {};
         if (sort === 'asc') sortOptions.price = 1;
         if (sort === 'desc') sortOptions.price = -1;
 
-        // Paginação
         const options = {
             limit: parseInt(limit),
             page: parseInt(page),
             sort: sortOptions,
-            lean: true, // Retorna objetos JavaScript simples em vez de documentos Mongoose
+            lean: true, 
         };
 
-        // Consulta ao banco de dados
         const result = await productManager.getProducts(filter, options);
 
-        // Resposta formatada
+
         const response = {
             status: 'success',
             payload: result.docs,

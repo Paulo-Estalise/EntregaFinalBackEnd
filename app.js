@@ -5,11 +5,11 @@ const LocalStrategy = require('passport-local').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const User = require('./src/models/user.model'); // Modelo de usuário
-const productsRouter = require('./src/routes/productsRouter'); // Importe o productsRouter
-const cartsRouter = require('./src/routes/cartsRouter'); // Importe o cartsRouter
-const viewsRouter = require('./src/routes/viewsRouter'); // Importe o viewsRouter
-const authRouter = require('./src/routes/authRouter'); // Importe o authRouter
+const User = require('./src/models/user.model'); 
+const productsRouter = require('./src/routes/productsRouter'); 
+const cartsRouter = require('./src/routes/cartsRouter'); 
+const viewsRouter = require('./src/routes/viewsRouter'); 
+const authRouter = require('./src/routes/authRouter'); 
 
 const app = express();
 const PORT = 8080;
@@ -19,21 +19,21 @@ mongoose.connect('mongodb+srv://usuario:senha@cluster0.mongodb.net/ecommerce?ret
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB Atlas:', err));
 
-// Configuração do express-session
+
 app.use(session({
-    secret: 'seuSegredoAqui', // Chave secreta para assinar a sessão
+    secret: 'seuSegredoAqui', 
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Defina como true se estiver usando HTTPS
+    cookie: { secure: false } 
 }));
 
-// Inicialize o Passport
+
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configuração da estratégia local do Passport
+
 passport.use(new LocalStrategy(
-    { usernameField: 'email' }, // Campo de email
+    { usernameField: 'email' },
     async (email, password, done) => {
         try {
             const user = await User.findOne({ email });
@@ -50,11 +50,10 @@ passport.use(new LocalStrategy(
     }
 ));
 
-// Configuração da estratégia do GitHub
 passport.use(new GitHubStrategy({
-    clientID: 'SEU_CLIENT_ID', // Substitua pelo seu Client ID do GitHub
-    clientSecret: 'SEU_CLIENT_SECRET', // Substitua pelo seu Client Secret do GitHub
-    callbackURL: 'http://localhost:8080/auth/github/callback' // URL de callback
+    clientID: 'Ov23li2X5P6S9hsQvhXa', 
+    clientSecret: '683e26271a51adeff220525c83a72d652104252e', 
+    callbackURL: 'http://localhost:8080/auth/github/callback' 
 },
 async (accessToken, refreshToken, profile, done) => {
     try {
@@ -74,7 +73,7 @@ async (accessToken, refreshToken, profile, done) => {
     }
 }));
 
-// Serialização e desserialização do usuário
+
 passport.serializeUser((user, done) => {
     done(null, user.id);
 });
@@ -88,17 +87,16 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Middleware para processar JSON
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas
+
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
-app.use('/auth', authRouter); // Rotas de autenticação
+app.use('/auth', authRouter); 
 
-// Inicia o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });

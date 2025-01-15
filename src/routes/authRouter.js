@@ -7,7 +7,7 @@ router.post('/register', async (req, res) => {
     const { email, password } = req.body;
     try {
         const hashedPassword = bcrypt.hashSync(password, 10);
-        const role = email === 'adminCoder@coder.com' ? 'admin' : 'user'; 
+        const role = email === 'adminCoder@coder.com' ? 'admin' : 'user'; // Define o role
         const newUser = new User({ email, password: hashedPassword, role });
         await newUser.save();
         res.redirect('/login');
@@ -25,7 +25,6 @@ router.post('/login', passport.authenticate('local', {
 
 
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
-
 
 router.get('/github/callback', passport.authenticate('github', {
     successRedirect: '/products',
