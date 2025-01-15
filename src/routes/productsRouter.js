@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const logger = require('../utils/logger'); // Importando o logger
+const logger = require('../utils/logger');
 
 /**
  * @swagger
@@ -107,10 +107,10 @@ router.get('/', async (req, res) => {
                 : null,
         };
 
-        logger.info('Produtos recuperados com sucesso'); // Log de info
+        logger.info('Produtos recuperados com sucesso');
         res.status(200).json(response);
     } catch (error) {
-        logger.error(`Erro ao buscar produtos: ${error.message}`); // Log de erro
+        logger.error(`Erro ao buscar produtos: ${error.message}`);
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
@@ -136,10 +136,10 @@ router.get('/', async (req, res) => {
 router.get('/mockingproducts', (req, res) => {
     try {
         const mockProducts = productController.getMockProducts();
-        logger.debug('Produtos fictícios gerados com sucesso'); // Log de debug
+        logger.debug('Produtos fictícios gerados com sucesso');
         res.status(200).json(mockProducts);
     } catch (error) {
-        logger.error(`Erro ao gerar produtos fictícios: ${error.message}`); // Log de erro
+        logger.error(`Erro ao gerar produtos fictícios: ${error.message}`);
         res.status(500).json({ message: 'Erro ao gerar produtos fictícios', error });
     }
 });
@@ -173,13 +173,13 @@ router.get('/:id', async (req, res) => {
     try {
         const product = await productController.getProductById(req.params.id);
         if (!product) {
-            logger.warn(`Produto não encontrado: ${req.params.id}`); // Log de warning
+            logger.warn(`Produto não encontrado: ${req.params.id}`);
             return res.status(404).json({ message: 'Produto não encontrado' });
         }
-        logger.info(`Produto encontrado: ${req.params.id}`); // Log de info
+        logger.info(`Produto encontrado: ${req.params.id}`);
         res.status(200).json(product);
     } catch (error) {
-        logger.error(`Erro ao buscar produto: ${error.message}`); // Log de erro
+        logger.error(`Erro ao buscar produto: ${error.message}`);
         res.status(500).json({ message: 'Erro interno no servidor', error });
     }
 });
@@ -209,10 +209,10 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const newProduct = await productController.createProduct(req.body);
-        logger.info('Produto criado com sucesso'); // Log de info
+        logger.info('Produto criado com sucesso');
         res.status(201).json(newProduct);
     } catch (error) {
-        logger.error(`Erro ao criar produto: ${error.message}`); // Log de erro
+        logger.error(`Erro ao criar produto: ${error.message}`);
         res.status(500).json({ message: 'Erro ao criar produto', error });
     }
 });
@@ -252,13 +252,13 @@ router.put('/:id', async (req, res) => {
     try {
         const updatedProduct = await productController.updateProduct(req.params.id, req.body);
         if (!updatedProduct) {
-            logger.warn(`Produto não encontrado para atualização: ${req.params.id}`); // Log de warning
+            logger.warn(`Produto não encontrado para atualização: ${req.params.id}`);
             return res.status(404).json({ message: 'Produto não encontrado' });
         }
-        logger.info(`Produto atualizado: ${req.params.id}`); // Log de info
+        logger.info(`Produto atualizado: ${req.params.id}`);
         res.status(200).json(updatedProduct);
     } catch (error) {
-        logger.error(`Erro ao atualizar produto: ${error.message}`); // Log de erro
+        logger.error(`Erro ao atualizar produto: ${error.message}`);
         res.status(500).json({ message: 'Erro ao atualizar produto', error });
     }
 });
@@ -288,50 +288,15 @@ router.delete('/:id', async (req, res) => {
     try {
         const deletedProduct = await productController.deleteProduct(req.params.id);
         if (!deletedProduct) {
-            logger.warn(`Produto não encontrado para exclusão: ${req.params.id}`); // Log de warning
+            logger.warn(`Produto não encontrado para exclusão: ${req.params.id}`);
             return res.status(404).json({ message: 'Produto não encontrado' });
         }
-        logger.info(`Produto excluído: ${req.params.id}`); // Log de info
+        logger.info(`Produto excluído: ${req.params.id}`);
         res.status(204).end();
     } catch (error) {
-        logger.error(`Erro ao excluir produto: ${error.message}`); // Log de erro
+        logger.error(`Erro ao excluir produto: ${error.message}`);
         res.status(500).json({ message: 'Erro ao excluir produto', error });
     }
 });
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Product:
- *       type: object
- *       properties:
- *         _id:
- *           type: string
- *           description: ID do produto
- *         name:
- *           type: string
- *           description: Nome do produto
- *         description:
- *           type: string
- *           description: Descrição do produto
- *         price:
- *           type: number
- *           description: Preço do produto
- *         category:
- *           type: string
- *           description: Categoria do produto
- *         stock:
- *           type: number
- *           description: Quantidade em estoque
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: Data de criação
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           description: Data de atualização
- */
 
 module.exports = router;
