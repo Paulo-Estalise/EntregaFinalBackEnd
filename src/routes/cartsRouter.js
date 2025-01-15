@@ -1,40 +1,45 @@
 const express = require('express');
-const CartManager = require('../CartManager');
-
+const CartManager = require('../mongo/CartManager');
 const router = express.Router();
-const cartManager = new CartManager('./src/carts.json');
+const cartManager = new CartManager();
 
-// Criar um novo carrinho
-router.post('/', async (req, res) => {
-    try {
-        const newCart = await cartManager.createCart();
-        res.status(201).json(newCart);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Obter um carrinho por ID
+// Rota para obter um carrinho específico
 router.get('/:cid', async (req, res) => {
     try {
-        const cart = await cartManager.getCartById(parseInt(req.params.cid));
-        if (cart) {
-            res.json(cart);
-        } else {
-            res.status(404).json({ error: "Carrinho não encontrado." });
-        }
+        const cart = await cartManager.getCartById(req.params.cid);
+        res.render('cart', { cart });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
-// Adicionar um produto ao carrinho
-router.post('/:cid/product/:pid', async (req, res) => {
+// Rota para atualizar o carrinho com uma lista de produtos
+router.put('/:cid', async (req, res) => {
     try {
-        const cart = await cartManager.addProductToCart(parseInt(req.params.cid), parseInt(req.params.pid));
-        res.json(cart);
+        const updatedCart = await cartManager.updateCart(req.params.cid, req.body.products);
+        res.json({ status: 'success', payload: updatedCart });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+// Rota para atualizar a quantidade de um produto no carrinho
+router.put('/:cid/products/:pid', async (req, res) => {
+    try {
+        const updatedCart = await cartManager.updateProductQuantity(req.params.cid, req.params.pid, req.body.quantity);
+        res.json({ status: 'success', payload: updatedCart });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+// Rota para remover todos os produtos do carrinho
+router.delete('/:cid', async (req, res) => {
+    try {
+        const updatedCart = await cartManager.clearCart(req.params.cid);
+        res.json({ status: 'success', payload: updatedCart });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
     }
 });
 

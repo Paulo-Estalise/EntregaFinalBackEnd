@@ -1,61 +1,55 @@
 const express = require('express');
-const ProductManager = require('../../mongo/ProductManager');
-
+const ProductManager = require('../mongo/ProductManager');
 const router = express.Router();
-const productManager = new ProductManager('./src/products.json');
+const productManager = new ProductManager();
 
-// Listar todos os produtos
+// Rota GET para listar produtos com paginação, filtros e ordenação
 router.get('/', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit);
-        const products = await productManager.getProducts();
-        res.json(limit ? products.slice(0, limit) : products);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        const { limit = 10, page = 1, sort, query } = req.query;
 
-// Obter um produto por ID
-router.get('/:pid', async (req, res) => {
-    try {
-        const product = await productManager.getProductById(parseInt(req.params.pid));
-        if (product) {
-            res.json(product);
-        } else {
-            res.status(404).json({ error: "Produto não encontrado." });
+        // Opções de filtro
+        const filter = {};
+        if (query) {
+            filter.$or = [
+                { category: query }, // Filtra por categoria
+                { status: query === 'available' }, // Filtra por disponibilidade
+            ];
         }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
-// Adicionar um produto
-router.post('/', async (req, res) => {
-    try {
-        const newProduct = await productManager.addProduct(req.body);
-        res.status(201).json(newProduct);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
+        // Opções de ordenação
+        const sortOptions = {};
+        if (sort === 'asc') sortOptions.price = 1;
+        if (sort === 'desc') sortOptions.price = -1;
 
-// Atualizar um produto
-router.put('/:pid', async (req, res) => {
-    try {
-        const updatedProduct = await productManager.updateProduct(parseInt(req.params.pid), req.body);
-        res.json(updatedProduct);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
+        // Paginação
+        const options = {
+            limit: parseInt(limit),
+            page: parseInt(page),
+            sort: sortOptions,
+            lean: true, // Retorna objetos JavaScript simples em vez de documentos Mongoose
+        };
 
-// Deletar um produto
-router.delete('/:pid', async (req, res) => {
-    try {
-        await productManager.deleteProduct(parseInt(req.params.pid));
-        res.json({ success: true });
+        // Consulta ao banco de dados
+        const result = await productManager.getProducts(filter, options);
+
+        // Resposta formatada
+        const response = {
+            status: 'success',
+            payload: result.docs,
+            totalPages: result.totalPages,
+            prevPage: result.prevPage,
+            nextPage: result.nextPage,
+            page: result.page,
+            hasPrevPage: result.hasPrevPage,
+            hasNextPage: result.hasNextPage,
+            prevLink: result.hasPrevPage ? `/api/products?limit=${limit}&page=${result.prevPage}&sort=${sort}&query=${query}` : null,
+            nextLink: result.hasNextPage ? `/api/products?limit=${limit}&page=${result.nextPage}&sort=${sort}&query=${query}` : null,
+        };
+
+        res.json(response);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
     }
 });
 

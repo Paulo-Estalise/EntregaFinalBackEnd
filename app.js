@@ -3,19 +3,18 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const handlebars = require('express-handlebars');
 const mongoose = require('mongoose');
-const productsRouter = require('./routes/productsRouter');
-const cartsRouter = require('./routes/cartsRouter');
-const viewsRouter = require('./routes/viewsRouter');
-const Message = require('./dao/models/message.model');
+const productsRouter = require('./src/routes/productsRouter');
+const cartsRouter = require('./src/routes/cartsRouter');
+const viewsRouter = require('./src/routes/viewsRouter');
+const Message = require('./src/models/message.model');
 
 const app = express();
 const PORT = 8080;
 
-// Conexão com o MongoDB
-mongoose.connect('mongodb+srv://<usuario>:<senha>@cluster0.mongodb.net/ecommerce?retryWrites=true&w=majority', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+// Conexão com o MongoDB Atlas
+mongoose.connect('mongodb+srv://<username>:<password>@cluster0.mongodb.net/<database>?retryWrites=true&w=majority')
+    .then(() => console.log('Conectado ao MongoDB Atlas'))
+    .catch(err => console.error('Erro ao conectar ao MongoDB Atlas:', err));
 
 // Configuração do Handlebars
 app.engine('handlebars', handlebars.engine());
